@@ -246,3 +246,24 @@ app.get('/uploads/:imageName', (req, res) => {
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
+fetch('your/api/endpoint') //check this URL
+  .then(response => {
+    if (!response.ok) {
+      // Handle HTTP errors (e.g., 404, 500)
+      throw new Error('Network response was not ok');
+    }
+    // Check if the Content-Type is JSON before parsing
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new TypeError('Expected JSON, but received ' + contentType);
+    }
+    return response.json(); // If it's JSON, parse it
+  })
+  .then(data => {
+    // Process the JSON data here
+    console.log(data);
+  })
+  .catch(error => {
+    // Handle parsing errors or network errors
+    console.error('Error:', error);
+  });
