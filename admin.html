@@ -168,17 +168,35 @@ h1 {
     </form>
 <script>
 const form = document.getElementById('product-form');
-form.addEventListener('submit', (e) => {
-    e.preventDefault(); // Prevent the default form submission
-    const formData = new FormData(form);
-    let productData = {}; //Create an object to store the form data
-    for (const [key, value] of formData.entries()) { //Iterate over the FormData entries
-      productData[key] = value; //Assign the values to the object
-    }
-    console.log('Form data:', productData); // Log the object containing the data
-    alert('Form submitted successfully!'); // Alert the user
-    form.reset(); //Reset the form
-  });
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(form);
+  let productData = {};
+
+  for (const [key, value] of formData.entries()) {
+    productData[key] = value;
+  }
+
+  console.log('Form data:', productData);
+
+  try {
+    const response = await fetch('/products', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await response.json();
+    console.log('Server response:', data);
+
+    alert('Form submitted successfully!');
+    form.reset();
+  } catch (error) {
+    console.error('Error submitting form:', error);
+    alert('Error submitting form. Please try again.');
+  }
+});
 </script>
 </body>
 </html>
