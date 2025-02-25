@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -20,13 +20,23 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 1024 * 1024 * 5 }, // 5MB file size limit
+  fileFilter(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('Only image files are allowed'));
+    }
+    cb(null, true);
+  },
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
-let products = [];
+const productsFilePath = 'products.json';
+let products = JSON.parse(fs.readFileSync(productsFilePath, 'utf8'));
 
 // Serve admin.html
 app.get('/', (req, res) => {
@@ -40,14 +50,20 @@ app.get('/products', (req, res) => {
 
 // Post a new product
 app.post('/products', upload.single('image'), (req, res) => {
-  const product = {
-    name: req.body.name,
-    description: req.body.description,
-    price: req.body.price,
-    image: req.file.filename,
-  };
-  products.push(product);
-  res.json(product);
+  try {
+    const product = {
+      name: req.body.name,
+      description: req.body.description,
+      price: req.body.price,
+      image: req.file.filename,
+    };
+    products.push(product);
+    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
+    res.json(product);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error uploading file' });
+  }
 });
 
 // Get a single product by index
@@ -71,6 +87,7 @@ app.put('/products/:index', upload.single('image'), (req, res) => {
       image: req.file ? req.file.filename : products[index].image,
     };
     products[index] = product;
+    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
     res.json(product);
   } else {
     res.status(404).json({ message: 'Product not found' });
@@ -82,6 +99,7 @@ app.delete('/products/:index', (req, res) => {
   const index = req.params.index;
   if (index >= 0 && index < products.length) {
     products.splice(index, 1);
+    fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
     res.json({ message: 'Product deleted successfully' });
   } else {
     res.status(404).json({ message: 'Product not found' });
