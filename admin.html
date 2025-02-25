@@ -167,10 +167,10 @@ h1 {
         <a href="admin.html"><button id="submit-button">Submit</button></a>
     </form>
 <script>
- const form = document.getElementById('product-form');
+let form = document.getElementById('product-form');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(form);
+    let formData = new FormData(form);
     try {
       const response = await fetch('/products', {
         method: 'POST',
